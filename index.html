@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        const ua = navigator.userAgent;
+        if (ua.includes('MicroMessenger')) {
+            // 微信用户跳转
+            window.location.href = 'weixin://dl/add?username=kalen7111';
+        } else if (ua.includes('WhatsApp')) {
+            // WhatsApp用户跳转
+            window.location.href = 'https://wa.me/8613545257111';
+        } else {
+            // 其他用户跳转（例如选择语言页面）
+            window.location.href = 'https://example.com/choose-language';
+        }
+    </script>
+</head>
+<body>
+    <!-- 空白页 -->
+</body>
+</html>
