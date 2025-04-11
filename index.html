@@ -1,84 +1,225 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 必须放在head的最前面 -->
     <meta charset="UTF-8">
-    <!-- 其他meta标签 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能联系助手</title>
     <style>
-        /* 样式保持不变 */
+        /* 保持原有样式 */
     </style>
 </head>
 <body>
-    <!-- 页面结构保持不变 -->
+    <div class="container"></div>
 
     <script>
-        // 确保CONFIG中的URL使用正确编码
+        // 增强版配置
         const CONFIG = {
             wechatId: 'your_wechat_id',
             whatsappNumber: '+8612345678901',
             qrCodeUrls: {
-                // 使用完整URL或正确相对路径
-                wechat: 'https://example.com/path/to/wechat-qr.jpg',
-                whatsapp: 'https://example.com/path/to/whatsapp-qr.jpg'
+                wechat: 'path/to/wechat-qr.png',
+                whatsapp: 'path/to/whatsapp-qr.png'
             },
-            redirectTimeout: 2000
-        };
-
-        // I18N对象确保使用标准引号
-        const I18N = {
-            zh: {
-                title: "我的联系方式",
-                // 其他中文文本...
-            },
-            en: {
-                title: "Contact Me",
-                // 其他英文文本...
+            redirectTimeout: 1500,
+            // 新增扫描回调配置
+            scanCallbacks: {
+                wechat: 'weixin://scanqrcode',
+                whatsapp: 'whatsapp://scan?code='
             }
         };
 
-        class QRRedirector {
-            // ...其他方法保持不变...
+        // 增强版国际化
+        const I18N = {
+            zh: {
+                title: "添加联系方式",
+                scanHint: "请用{app}扫描二维码",
+                wechat: {
+                    title: "微信添加",
+                    button: "打开微信"
+                },
+                whatsapp: {
+                    title: "WhatsApp联系",
+                    button: "打开WhatsApp"
+                }
+            },
+            en: {
+                title: "Add Contact",
+                scanHint: "Please scan with {app}",
+                wechat: {
+                    title: "WeChat",
+                    button: "Open WeChat"
+                },
+                whatsapp: {
+                    title: "WhatsApp",
+                    button: "Open WhatsApp"
+                }
+            }
+        };
 
-            showDesktopWeChatTip() {
-                // 确保模板字符串中的中文编码正确
+        class ContactRedirector {
+            constructor() {
+                this.container = document.querySelector('.container');
+                this.currentLang = this.detectLanguage();
+                this.init();
+            }
+
+            init() {
+                this.renderUI();
+                this.setupAppDetection();
+            }
+
+            // 增强版环境检测
+            detectApp() {
+                const ua = navigator.userAgent.toLowerCase();
+                return {
+                    isWeChat: /micromessenger|wechat/i.test(ua),
+                    isWhatsApp: /whatsapp|wabusiness/i.test(ua),
+                    isMobile: /mobile|android|iphone|ipod|ipad/i.test(ua)
+                };
+            }
+
+            // 动态渲染界面
+            renderUI() {
                 this.container.innerHTML = `
                     <div class="option-card">
-                        <h3>${this.escapeHtml(I18N[this.currentLang].wechat.title)}</h3>
-                        <div class="desktop-tip">
-                            ${this.escapeHtml(I18N[this.currentLang].wechat.desktopTip)}
-                        </div>
-                        <img src="${this.escapeHtml(CONFIG.qrCodeUrls.wechat)}" 
-                             class="qr-code" 
-                             alt="WeChat QR Code">
+                        <h2>${I18N[this.currentLang].title}</h2>
+                        ${this.renderQRCard('wechat')}
+                        ${this.renderQRCard('whatsapp')}
                     </div>
                 `;
             }
 
-            // 新增HTML转义方法防止XSS
-            escapeHtml(unsafe) {
-                return unsafe.toString()
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
+            // 渲染二维码卡片
+            renderQRCard(type) {
+                const data = I18N[this.currentLang][type];
+                return `
+                    <div class="qr-section">
+                        <h3>${data.title}</h3>
+                        <img src="${CONFIG.qrCodeUrls[type]}" 
+                             class="qr-code" 
+                             alt="${data.title}"
+                             data-app="${type}">
+                        <p>${I18N[this.currentLang].scanHint.replace('{app}', data.title)}</p>
+                        <button class="action-button ${type}-button" data-app="${type}">
+                            ${data.button}
+                        </button>
+                    </div>
+                `;
+            }
+
+            // 设置应用检测和跳转
+            setupAppDetection() {
+                // 按钮点击事件
+                this.container.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('action-button')) {
+                        const appType = e.target.dataset.app;
+                        this.handleAppRedirect(appType);
+                    }
+                });
+
+                // 自动检测
+                const { isWeChat, isWhatsApp } = this.detectApp();
+                if (isWeChat || isWhatsApp) {
+                    this.handleAppRedirect(isWeChat ? 'wechat' : 'whatsapp');
+                }
+            }
+
+            // 处理应用跳转
+            handleAppRedirect(appType) {
+                if (appType === 'wechat') {
+                    this.redirectToWeChat();
+                } else {
+                    this.redirectToWhatsApp();
+                }
+            }
+
+            // 微信跳转增强
+            redirectToWeChat() {
+                const schemes = [
+                    `weixin://dl/add?${CONFIG.wechatId}`,
+                    `weixin://scanqrcode?url=${encodeURIComponent(CONFIG.qrCodeUrls.wechat)}`,
+                    `weixin://qr/${CONFIG.wechatId}`
+                ];
+
+                this.trySchemesSequentially(schemes, 'wechat');
+            }
+
+            // WhatsApp跳转增强
+            redirectToWhatsApp() {
+                const phone = CONFIG.whatsappNumber.replace(/[^\d]/g, '');
+                const schemes = [
+                    `whatsapp://send?phone=${phone}`,
+                    `whatsapp://scan?code=${phone}`,
+                    `https://wa.me/${phone}`,
+                    `https://api.whatsapp.com/send?phone=${phone}`
+                ];
+
+                this.trySchemesSequentially(schemes, 'whatsapp');
+            }
+
+            // 顺序尝试多种跳转方案
+            trySchemesSequentially(schemes, appType) {
+                let attempt = 0;
+                const tryNext = () => {
+                    if (attempt >= schemes.length) {
+                        this.showManualFallback(appType);
+                        return;
+                    }
+
+                    this.executeRedirect(schemes[attempt], appType);
+                    attempt++;
+                    
+                    if (attempt < schemes.length) {
+                        setTimeout(tryNext, 1000);
+                    }
+                };
+
+                tryNext();
+            }
+
+            // 执行跳转
+            executeRedirect(url, appType) {
+                // iframe方式
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = url;
+                document.body.appendChild(iframe);
+                
+                // 标准跳转
+                window.location.href = url;
+                
+                // 清理
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 3000);
+            }
+
+            // 备用方案
+            showManualFallback(appType) {
+                const data = I18N[this.currentLang][appType];
+                this.container.innerHTML = `
+                    <div class="fallback">
+                        <h3>${data.title}</h3>
+                        <p>无法自动跳转，请手动操作：</p>
+                        <p>${appType === 'wechat' ? 
+                            `微信ID: ${CONFIG.wechatId}` : 
+                            `电话号码: ${CONFIG.whatsappNumber}`}
+                        </p>
+                        <img src="${CONFIG.qrCodeUrls[appType]}" 
+                             class="qr-code" 
+                             alt="${data.title}">
+                    </div>
+                `;
+            }
+
+            detectLanguage() {
+                return navigator.language.startsWith('zh') ? 'zh' : 'en';
             }
         }
 
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
-            try {
-                new QRRedirector();
-            } catch (e) {
-                console.error("初始化失败:", e);
-                // 显示错误回退界面
-                document.querySelector('.container').innerHTML = `
-                    <h2>页面加载出错</h2>
-                    <p>请扫描二维码或手动添加联系方式</p>
-                    <p>WeChat: ${CONFIG.wechatId}</p>
-                    <p>WhatsApp: ${CONFIG.whatsappNumber}</p>
-                `;
-            }
+            new ContactRedirector();
         });
     </script>
 </body>
