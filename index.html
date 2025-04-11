@@ -1,35 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta name="description" content="根据微信或WhatsApp环境自动跳转或显示二维码">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="description" content="智能跳转助手：根据微信或WhatsApp环境自动跳转或显示二维码">
     <title>智能跳转助手</title>
-    <script>
-        const ua = navigator.userAgent;
-        if (ua.includes('MicroMessenger')) {
-            // 微信内显示二维码（带错误处理）
-            document.body.innerHTML = `
-                <img 
-                    src="https://i.ibb.co/v4ZHK3J/wechat-qr.png" 
-                    onerror="this.onerror=null; this.src='fallback-qr.png';" 
-                    style="width:100%; max-width:300px; display:block; margin:20px auto;"
-                >
-                <p style="text-align:center;">长按二维码识别</p>
-            `;
-        } else if (ua.includes('WhatsApp')) {
-            // WhatsApp跳转（带延迟和国际号码格式）
-            setTimeout(() => {
-                window.location.href = 'https://wa.me/+14132487465';
-            }, 500);
-        } else {
-            // 其他浏览器跳转到语言选择页
-            window.location.href = 'https://example.com/choose-language';
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+            background-color: #f5f5f5;
         }
-    </script>
+        .container {
+            max-width: 300px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .qr-code {
+            width: 100%;
+            height: auto;
+            margin: 0 auto 15px;
+        }
+        .loading {
+            margin: 50px auto;
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-    <noscript>请启用JavaScript以使用本功能</noscript>
+    <div class="container">
+        <div class="loading">正在检测运行环境...</div>
+    </div>
+
+    <script>
+        // 添加加载状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const ua = navigator.userAgent;
+            const container = document.querySelector('.container');
+            
+            if (ua.includes('MicroMessenger')) {
+                // 微信内显示二维码（带错误处理）
+                container.innerHTML = `
+                    <img 
+                        src="https://i.ibb.co/v4ZHK3J/wechat-qr.png" 
+                        onerror="this.onerror=null; this.src='fallback-qr.png';" 
+                        class="qr-code"
+                        alt="微信二维码"
+                    >
+                    <p>长按二维码识别</p>
+                    <p style="font-size:14px;color:#888;">如果无法识别，请截图后通过微信扫一扫打开</p>
+                `;
+            } else if (ua.includes('WhatsApp')) {
+                // WhatsApp跳转（带延迟和国际号码格式）
+                container.innerHTML = '<p>正在跳转到WhatsApp...</p>';
+                setTimeout(() => {
+                    window.location.href = 'https://wa.me/+14132487465';
+                }, 800);
+            } else {
+                // 其他浏览器跳转到语言选择页
+                container.innerHTML = '<p>正在跳转到网站...</p>';
+                setTimeout(() => {
+                    window.location.href = 'https://example.com/choose-language';
+                }, 800);
+            }
+        });
+    </script>
+    <noscript>
+        <div class="container">
+            <p>请启用JavaScript以使用本功能</p>
+        </div>
+    </noscript>
 </body>
 </html>
