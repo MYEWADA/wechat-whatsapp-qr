@@ -1,237 +1,73 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="description" content="智能二维码识别跳转页面">
-    <title>智能二维码识别</title>
-    <style>
-        :root {
-            --whatsapp-color: #25D366;
-            --wechat-color: #07C160;
-            --error-color: #f44336;
-            --text-color: #333;
-            --light-text: #666;
-            --border-color: #eee;
-            --bg-color: #f5f5f5;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
-                         Helvetica, Arial, sans-serif;
-            padding: 20px;
-            text-align: center;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 300px;
-            margin: 50px auto;
-            padding: 25px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        
-        .qr-code {
-            width: 100%;
-            max-width: 250px;
-            height: auto;
-            margin: 15px auto;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-        
-        .option-card {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .option-card:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
-        .qr-instructions {
-            font-size: 14px;
-            color: var(--light-text);
-            text-align: left;
-            margin: 15px 0;
-            padding: 0 10px;
-        }
-        
-        .action-button {
-            display: inline-block;
-            padding: 10px 20px;
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
-            margin-top: 10px;
-            font-weight: 500;
-        }
-        
-        .whatsapp-button {
-            background: var(--whatsapp-color);
-        }
-        
-        .wechat-button {
-            background: var(--wechat-color);
-        }
-        
-        .error-message {
-            color: var(--error-color);
-            font-weight: 500;
-        }
-        
-        h2 {
-            margin: 0 0 20px;
-            color: var(--text-color);
-        }
-        
-        h3 {
-            margin: 0 0 15px;
-            color: var(--text-color);
-        }
-        
-        @media (max-width: 360px) {
-            .container {
-                padding: 20px 15px;
-                margin: 30px auto;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>智能二维码识别</h2>
-        
-        <div class="option-card">
-            <h3>请使用微信或WhatsApp扫描</h3>
-            <img 
-                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTAiIGhlaWdodD0iMjUwIiB2aWV3Qm94PSIwIDAgMjUwIDI1MCI+PHJlY3Qgd2lkdGg9IjI1MCIgaGVpZ2h0PSIyNTAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzMzMyI+U2NhbiBNZQo8dHNwYW4geD0iNTAlIiBkeT0iMjQiPndpdGggV2VDaGF0L1doYXRzQXBwPC90c3Bhbj48L3RleHQ+PC9zdmc+"
-                class="qr-code"
-                alt="智能二维码"
-                id="smart-qr"
-            >
-            <div class="qr-instructions" id="qr-instructions">
-                <p>1. 使用微信扫描添加好友</p>
-                <p>2. 使用WhatsApp扫描开始聊天</p>
-            </div>
-        </div>
-    </div>
+<script>
+// 修改后的配置部分
+const CONFIG = {
+    wechatId: 'your_wechat_id',
+    whatsappNumber: '8612345678901', // 去掉+号，使用纯数字
+    qrCodeUrls: {
+        wechat: 'path/to/wechat-qr.jpg',
+        whatsapp: 'path/to/whatsapp-qr.jpg'
+    },
+    redirectTimeout: 2000,
+    whatsappSchemes: [
+        'whatsapp://send?phone=',
+        'https://wa.me/',
+        'https://api.whatsapp.com/send?phone='
+    ]
+};
 
-    <script>
-        // 检测用户代理
-        function detectApp() {
-            const ua = navigator.userAgent.toLowerCase();
-            
-            // 微信检测
-            if (ua.includes('micromessenger')) {
-                return 'wechat';
-            }
-            
-            // WhatsApp检测
-            if (ua.includes('whatsapp')) {
-                return 'whatsapp';
-            }
-            
-            return null;
-        }
-        
-        // 根据应用执行跳转
-        function redirectBasedOnApp() {
-            const app = detectApp();
-            const container = document.querySelector('.container');
-            
-            if (app === 'wechat') {
-                // 微信跳转逻辑
-                container.innerHTML = `
-                    <h2>正在跳转到微信...</h2>
-                    <p>请稍候，正在为您打开微信添加好友页面</p>
-                `;
-                setTimeout(() => {
-                    // 这里替换为你的微信添加好友URL或scheme
-                    window.location.href = 'weixin://dl/add?your_wechat_id';
-                }, 1000);
-            } 
-            else if (app === 'whatsapp') {
-                // WhatsApp跳转逻辑
-                container.innerHTML = `
-                    <h2>正在跳转到WhatsApp...</h2>
-                    <p>请稍候，正在为您打开WhatsApp聊天页面</p>
-                `;
-                setTimeout(() => {
-                    window.location.href = 'https://wa.me/+8613825738443';
-                }, 1000);
-            }
-            else {
-                // 非微信/WhatsApp环境显示完整选项
-                container.innerHTML = `
-                    <h2>我的联系方式</h2>
-                    
-                    <div class="option-card">
-                        <h3>微信联系</h3>
-                        <img 
-                            src="https://i.ibb.co/v4ZHK3J/wechat-qr.png" 
-                            onerror="handleWeChatQRError(this)" 
-                            class="qr-code"
-                            alt="微信二维码"
-                        >
-                        <div class="qr-instructions">
-                            <p>1. 长按识别二维码</p>
-                            <p>2. 或截图后通过微信扫一扫打开</p>
-                            <p>3. 或搜索微信号: AppStoreID09</p>
-                        </div>
-                        <a href="weixin://dl/add?your_wechat_id" class="action-button wechat-button">打开微信</a>
-                    </div>
-                    
-                    <div class="option-card">
-                        <h3>WhatsApp联系</h3>
-                        <div class="qr-instructions">
-                            <p>点击下方按钮直接打开WhatsApp</p>
-                            <p>或保存号码: +8613825738443</p>
-                        </div>
-                        <a href="https://wa.me/+8613825738443" class="action-button whatsapp-button">打开WhatsApp</a>
-                    </div>
-                `;
-            }
-        }
-        
-        // 微信二维码错误处理
-        function handleWeChatQRError(img) {
-            img.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTAiIGhlaWdodD0iMjUwIj48cmVjdCB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjZjQ0MzM2Ij5RUiBDb2RlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=";
-            const instructions = img.nextElementSibling;
-            
-            if (instructions && instructions.classList.contains('qr-instructions')) {
-                instructions.innerHTML = `
-                    <p class="error-message">二维码加载失败</p>
-                    <p>请搜索微信号: your_wechat_id</p>
-                `;
-            }
-        }
-        
-        // 页面加载后执行检测
-        document.addEventListener('DOMContentLoaded', redirectBasedOnApp);
-    </script>
+// 修改后的检测方法
+detectApp() {
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes('micromessenger')) return 'wechat';
+    // 扩展检测规则，包含WhatsApp Business
+    if (ua.includes('whatsapp') || ua.includes('whatsapp business')) {
+        return 'whatsapp';
+    }
+    return null;
+}
+
+// 修改后的跳转方法
+attemptRedirect(app) {
+    if (app === 'wechat') {
+        window.location.href = `weixin://dl/add?${CONFIG.wechatId}`;
+    } else {
+        // 尝试多种WhatsApp跳转方案
+        this.redirectToWhatsApp();
+    }
     
-    <noscript>
-        <div class="container">
-            <h2>我的联系方式</h2>
-            <div class="qr-instructions">
-                <h3>微信</h3>
-                <p>微信号: AppStoreID09</p>
-                
-                <h3>WhatsApp</h3>
-                <p>号码: +8613825738443</p>
-            </div>
-        </div>
-    </noscript>
-</body>
-</html>
+    this.redirectTimer = setTimeout(() => {
+        if (!document.hidden) {
+            this.showContactOptions();
+        }
+    }, CONFIG.redirectTimeout);
+}
+
+// 新增WhatsApp跳转方法
+redirectToWhatsApp() {
+    const phone = CONFIG.whatsappNumber.replace(/[^\d]/g, ''); // 确保纯数字
+    const messages = [
+        `尝试打开 whatsapp://send?phone=${phone}`,
+        `尝试打开 https://wa.me/${phone}`,
+        `尝试打开 https://api.whatsapp.com/send?phone=${phone}`
+    ];
+    
+    // 先尝试应用内跳转
+    window.location.href = `whatsapp://send?phone=${phone}`;
+    
+    // 备用方案
+    setTimeout(() => {
+        if (!document.hidden) {
+            console.log(messages[0] + ' 失败，尝试备用方案');
+            window.location.href = `https://wa.me/${phone}`;
+        }
+    }, 800);
+    
+    // 最终备用方案
+    setTimeout(() => {
+        if (!document.hidden) {
+            console.log(messages[1] + ' 失败，尝试最终方案');
+            window.location.href = `https://api.whatsapp.com/send?phone=${phone}`;
+        }
+    }, 1800);
+}
+</script>
