@@ -4,19 +4,20 @@
     <script>
         const ua = navigator.userAgent;
         if (ua.includes('MicroMessenger')) {
-    // 显示二维码图片供长按识别
-    document.body.innerHTML = '<img src="https://ibb.co/v4ZHK3J6" style="width:100%">';
-}
+            // 微信内打开：显示二维码供长按识别
+            document.body.innerHTML = '<img src="https://i.ibb.co/v4ZHK3J/wechat-qr.png" style="width:100%; max-width:300px; display:block; margin:0 auto;">';
         } else if (ua.includes('WhatsApp')) {
-            // WhatsApp用户跳转
+            // WhatsApp内打开：跳转到WhatsApp聊天
             window.location.href = 'https://wa.me/14132487465';
         } else {
-            // 其他用户跳转（例如选择语言页面）
+            // 其他浏览器：跳转到选择语言页面
             window.location.href = 'https://example.com/choose-language';
         }
     </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
 </head>
 <body>
-    <!-- 空白页 -->
+    <!-- 默认空白页（脚本会动态替换内容） -->
 </body>
 </html>
