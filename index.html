@@ -1,5 +1,82 @@
 class SmartContact {
     // ... 其他原有代码保持不变 ...
+// 修改后的WhatsApp跳转方法
+redirectToWhatsApp() {
+    const phone = CONFIG.whatsappNumber.replace(/[^\d]/g, '');
+    
+    // 支持所有WhatsApp变体的scheme
+    const schemes = [
+        // 标准WhatsApp
+        `whatsapp://send?phone=${phone}`,
+        // WhatsApp Business
+        `whatsapp-business://send?phone=${phone}`,
+        // 网页版备用方案
+        `https://wa.me/${phone}`,
+        `https://api.whatsapp.com/send?phone=${phone}`
+    ];
+    
+    this.trySchemesSequentially(schemes);
+}
+
+// 增强版scheme尝试方法
+trySchemesSequentially(schemes, attempt = 0) {
+    if (attempt >= schemes.length) {
+        this.showManualFallback();
+        return;
+    }
+
+    // 添加延迟检测，避免快速连续跳转
+    if (attempt > 0) {
+        setTimeout(() => {
+            if (!document.hidden) {
+                this.executeRedirect(schemes[attempt]);
+                this.trySchemesSequentially(schemes, attempt + 1);
+            }
+        }, attempt * 800); // 逐步增加延迟
+    } else {
+        this.executeRedirect(schemes[attempt]);
+        setTimeout(() => {
+            if (!document.hidden) {
+                this.trySchemesSequentially(schemes, attempt + 1);
+            }
+        }, 1000);
+    }
+}
+
+// 增强版环境检测
+detectAppEnvironment() {
+    const ua = navigator.userAgent.toLowerCase();
+    const isWeChat = /micromessenger|wechat/i.test(ua);
+    const isWhatsApp = /whatsapp|wabusiness/i.test(ua);
+    
+    // 更精确的WhatsApp Business检测
+    const isWhatsAppBusiness = /wabusiness/i.test(ua);
+    
+    return {
+        isWeChat,
+        isWhatsApp,
+        isWhatsAppBusiness,
+        isInApp: isWeChat || isWhatsApp || isWhatsAppBusiness,
+        isMobile: /mobile|android|iphone|ipod|ipad/i.test(ua)
+    };
+}
+
+// 增强版WhatsApp内置处理
+handleWhatsAppInApp() {
+    this.showLoading(I18N[this.currentLang].whatsapp.title);
+    
+    const phone = CONFIG.whatsappNumber.replace(/[^\d]/g, '');
+    const text = encodeURIComponent('Hello');
+    
+    // 根据具体类型使用不同scheme
+    const url = this.appInfo.isWhatsAppBusiness 
+        ? `whatsapp-business://send?phone=${phone}&text=${text}`
+        : `whatsapp://send?phone=${phone}&text=${text}`;
+    
+    setTimeout(() => {
+        location.href = url;
+    }, 300);
+}
 
     // 增强版WhatsApp跳转方法
     redirectToWhatsApp() {
